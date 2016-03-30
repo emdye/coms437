@@ -11,6 +11,15 @@ namespace asteroids437
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        Model ship;
+        float aspectRatio;
+
+        // Set the position of the model in world space, and set the rotation.
+        Vector3 modelPosition = Vector3.Zero;
+        float modelRotation = 0.0f;
+
+        // Set the position of the camera in world space, for our view matrix.
+        Vector3 cameraPosition = new Vector3(0.0f, 50.0f, 5000.0f);
 
         public Game1()
         {
@@ -41,6 +50,8 @@ namespace asteroids437
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            ship = Content.Load<Model>("karenspaceship");
+            aspectRatio = graphics.GraphicsDevice.Viewport.AspectRatio;
         }
 
         /// <summary>
@@ -76,6 +87,32 @@ namespace asteroids437
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
+
+
+            // Copy any parent transforms.
+            Matrix[] transforms = new Matrix[ship.Bones.Count];
+            ship.CopyAbsoluteBoneTransformsTo(transforms);
+
+            // Draw the model. A model can have multiple meshes, so loop.
+            foreach (ModelMesh mesh in ship.Meshes)
+            {
+                // This is where the mesh orientation is set, as well 
+                // as our camera and projection.
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.EnableDefaultLighting();
+                    effect.World = transforms[mesh.ParentBone.Index] *
+                        Matrix.CreateRotationY(modelRotation)
+                        * Matrix.CreateTranslation(modelPosition);
+                    effect.View = Matrix.CreateLookAt(cameraPosition,
+                        Vector3.Zero, Vector3.Up);
+                    effect.Projection = Matrix.CreatePerspectiveFieldOfView(
+                        MathHelper.ToRadians(25.0f), aspectRatio,
+                        1.0f, 10000.0f);
+                }
+                // Draw the mesh, using the effects set above.
+                mesh.Draw();
+            }
 
             base.Draw(gameTime);
         }
